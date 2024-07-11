@@ -268,4 +268,16 @@ public class QuerydslBasicTest {
             System.out.println("username = " + username +" age = " + age + " rank = " + rank);
         }
     }
+
+    @Test
+    public void concat() {
+        //{username}_{age}
+        List<String> result = jpaQueryFactory.select(member.username.concat("_").concat(member.age.stringValue()))
+                .from(member)
+                .where(member.username.eq("member1"))
+                .fetch();
+        for (String string : result) {
+            System.out.println("string = " + string);
+        }
+    }
 }
