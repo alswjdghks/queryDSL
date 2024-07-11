@@ -136,4 +136,31 @@ public class QuerydslBasicTest {
         assertThat(member6.getUsername()).isEqualTo("member6");
         assertThat(nullMember.getUsername()).isNull();
     }
+
+
+    @Test
+    public void paging1() {
+        List<Member> result = jpaQueryFactory
+                .selectFrom(member)
+                .orderBy(member.username.desc())
+                .offset(1) // 0부터 시작
+                .limit(2) // 최대 2건 조회
+                .fetch();
+
+        assertThat(result.size()).isEqualTo(2);
+    }
+    @Test
+    public void paging2() {
+        QueryResults<Member> fetchResult = jpaQueryFactory
+                .selectFrom(member)
+                .orderBy(member.username.desc())
+                .offset(1)
+                .limit(2)
+                .fetchResults();
+
+        assertThat(fetchResult.getTotal()).isEqualTo(4);
+        assertThat(fetchResult.getOffset()).isEqualTo(1);
+        assertThat(fetchResult.getLimit()).isEqualTo(2);
+        assertThat(fetchResult.getResults().size()).isEqualTo(2);
+    }
 }
