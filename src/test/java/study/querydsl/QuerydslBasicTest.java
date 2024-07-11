@@ -2,6 +2,8 @@ package study.querydsl;
 
 import com.querydsl.core.QueryResults;
 import com.querydsl.core.Tuple;
+import com.querydsl.core.types.dsl.CaseBuilder;
+import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
 import org.assertj.core.api.Assertions;
@@ -166,16 +168,16 @@ public class QuerydslBasicTest {
         assertThat(fetchResult.getLimit()).isEqualTo(2);
         assertThat(fetchResult.getResults().size()).isEqualTo(2);
     }
-    /**
-            * JPQL
- * select
- * COUNT(m), //회원수
- * SUM(m.age), //나이 합
- * AVG(m.age), //평균 나이
- * MAX(m.age), //최대 나이
- * MIN(m.age) //최소 나이
- * from Member m
- */
+       /**
+    * JPQL
+    * select
+    * COUNT(m), //회원수
+    * SUM(m.age), //나이 합
+    * AVG(m.age), //평균 나이
+    * MAX(m.age), //최대 나이
+    * MIN(m.age) //최소 나이
+    * from Member m
+    */
     @Test
     public void aggregation() throws Exception {
         List<Tuple> result = jpaQueryFactory
@@ -213,5 +215,57 @@ public class QuerydslBasicTest {
 
         assertThat(teamB.get(team.name)).isEqualTo("teamB");
         assertThat(teamB.get(member.age.avg())).isEqualTo(35);
+    }
+
+    @Test
+    public void basicCase() {
+        List<String> result = jpaQueryFactory.select(member.age
+                        .when(10).then("열살")
+                        .when(20).then("스무살")
+                        .otherwise("기타"))
+                        .from(member)
+                        .fetch();
+        for (String string : result) {
+            System.out.println("string = " + string);
+        }
+    }
+
+    @Test
+    public void complexCase() {
+        List<String> result = jpaQueryFactory.select(new CaseBuilder()
+                        .when(member.age.between(0, 20)).then("0~20살")
+                        .when(member.age.between(21, 30)).then("21~30살")
+                        .otherwise("기타"))
+                .from(member)
+                .fetch();
+        for (String string : result) {
+            System.out.println("string = " + string);
+        }
+    }
+
+    /**
+     * 다음과 같은 임의의 순서로 회원을 출력하고 싶다면?
+     * 1.0~30살이 아닌 회원을 가장 먼저 출력
+     * 2.0~20살 회원 출력
+     * 3.21~30살 회원 출력
+     */
+    @Test
+    public void newCase() {
+        NumberExpression<Integer> rankPath = new CaseBuilder()
+                .when(member.age.between(0,20)).then(2)
+                .when(member.age.between(21,30)).then(1)
+                .otherwise(3);
+
+        List<Tuple> result = jpaQueryFactory.select(member.username, member.age, rankPath)
+                .from(member)
+                .orderBy(rankPath.desc())
+                .fetch();
+
+        for (Tuple tuple : result) {
+            String username = tuple.get(member.username);
+            Integer age = tuple.get(member.age);
+            Integer rank = tuple.get(rankPath);
+            System.out.println("username = " + username +" age = " + age + " rank = " + rank);
+        }
     }
 }
