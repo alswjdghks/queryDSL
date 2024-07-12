@@ -593,4 +593,50 @@ public class QuerydslBasicTest {
         return userEq(usernameParam).and(ageEq(ageParam));
     }
 
+    @Test
+    public void bulkUpdate() {
+        //member1 = 10 -> DB member1
+        //member2 = 20 -> DB member2
+        //member3 = 30 -> DB member3
+        //member4 = 40 -> DB member4
+
+        long count = jpaQueryFactory.update(member)
+                .set(member.username, "비회원")
+                .where(member.age.lt(28))
+                .execute();
+
+        // bulk 연산하면 그냥 초기화 해버려라
+        em.flush();
+        em.clear();
+
+        //member1 = 10 -> DB 비회원
+        //member2 = 20 -> DB 비회원
+        //member3 = 30 -> DB member3
+        //member4 = 40 -> DB member4
+        // => DB 에서 select 해도 영속성 컨텍스트에 있으면 가져온것을 버린다.
+        List<Member> list = jpaQueryFactory.selectFrom(member).fetch();
+        for (Member member : list) {
+            System.out.println("member = " + member);
+        }
+    }
+    @Test
+    public void bulkAdd() {
+        long count = jpaQueryFactory.update(member)
+                .set(member.age,member.age.add(1))
+                .execute();
+    }
+
+    @Test
+    public void bulkMultiply() {
+        long count = jpaQueryFactory.update(member)
+                .set(member.age,member.age.multiply(2))
+                .execute();
+    }
+
+    @Test
+    public void bulkDelete() {
+        long count = jpaQueryFactory.delete(member)
+                .where(member.age.gt(18))
+                .execute();
+    }
 }
