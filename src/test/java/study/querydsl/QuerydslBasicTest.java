@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 import study.querydsl.dto.MemberDto;
+import study.querydsl.dto.QMemberDto;
 import study.querydsl.dto.UserDto;
 import study.querydsl.entity.Member;
 import study.querydsl.entity.QMember;
@@ -520,6 +521,17 @@ public class QuerydslBasicTest {
         List<MemberDto> result = jpaQueryFactory.select(Projections.constructor(MemberDto.class, member.username, member.age))
                 .from(member)
                 .fetch();
+        for (MemberDto memberDto : result) {
+            System.out.println("memberDto = " + memberDto);
+        }
+    }
+    //@QueryProjection 을 사용하면 Dto가 querydsl에 의존되므로 좋지 않다.
+    @Test
+    public void findDtoByQueryProjection() {
+        List<MemberDto> result = jpaQueryFactory.select(new QMemberDto(member.username, member.age))
+                .from(member)
+                .fetch();
+
         for (MemberDto memberDto : result) {
             System.out.println("memberDto = " + memberDto);
         }
